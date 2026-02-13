@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kanban Board - Керування Проектами</title>
+    <style>
+        /* ========== ЗАГАЛЬНІ СТИЛІ ========== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        /* ========== HEADER ========== */
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 20px 30px;
+            border-radius: 16px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .header h1 {
+            color: #2d3748;
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 15px;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 15px;
+        }
+
+        /* ========== КНОПКИ ========== */
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #e2e8f0;
+            color: #4a5568;
+        }
+
+        .btn-secondary:hover {
+            background: #cbd5e0;
+        }
+
+        .btn-success {
+            background: #48bb78;
+            color: white;
+        }
+
+        .btn-danger {
+            background: #f56565;
+            color: white;
+        }
+
+        /* ========== KANBAN BOARD ========== */
+        .kanban-container {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 30px;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .project-selector {
+            margin-bottom: 30px;
+        }
+
+        .project-selector select {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 500;
+            color: #2d3748;
+            background: white;
+            cursor: pointer;
+            transition: border-color 0.3s;
+        }
+
+        .project-selector select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .kanban-board {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        /* ========== КОЛОНКИ KANBAN ========== */
+        .kanban-column {
+            background: #f7fafc;
+            border-radius: 12px;
+            padding: 20px;
+            min-height: 500px;
+        }
+
+        .column-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 3px solid #e2e8f0;
+        }
+
+        .column-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: #2d3748;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .column-count {
+            background: #667eea;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .column-todo .column-count { background: #ed8936; }
+        .column-in-progress .column-count { background: #3182ce; }
+        .column-done .column-count { background: #48bb78; }
+
+        /* ========== КАРТКИ ЗАДАЧ ========== */
+        .task-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .task-card {
+            background: white;
+            border-radius: 10px;
+            padding: 16px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            cursor: move;
+            transition: all 0.3s ease;
+            border-left: 4px solid #667eea;
+        }
+
+        .task-card:hover {
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
+            transform: translateY(-2px);
+        }
+
+        .task-card.priority-high {
+            border-left-color: #f56565;
+        }
+
+        .task-card.priority-medium {
+            border-left-color: #ed8936;
+        }
+
+        .task-card.priority-low {
+            border-left-color: #48bb78;
+        }
+
+        .task-card.dragging {
+            opacity: 0.5;
+        }
+
+        .task-title {
+            font-size: 15px;
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 8px;
+        }
+
+        .task-description {
+            font-size: 13px;
+            color: #718096;
+            margin-bottom: 12px;
+            line-height: 1.5;
+        }
+
+        .task-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .task-priority {
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .task-priority.high {
+            background: #fed7d7;
+            color: #c53030;
+        }
+
+        .task-priority.medium {
+            background: #feebc8;
+            color: #c05621;
+        }
+
+        .task-priority.low {
+            background: #c6f6d5;
+            color: #276749;
+        }
+
+        .task-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .task-actions button {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 18px;
+            opacity: 0.6;
+            transition: opacity 0.3s;
+        }
+
+        .task-actions button:hover {
+            opacity: 1;
+        }
+
+        /* ========== МОДАЛЬНЕ ВІКНО ========== */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 16px;
+            padding: 30px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .modal-header {
+            font-size: 24px;
+            font-weight: 700;
+            color: #2d3748;
+            margin-bottom: 25px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            color: #4a5568;
+            margin-bottom: 8px;
+        }
+
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 14px;
+            color: #2d3748;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .form-group textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+            margin-top: 25px;
+        }
+
+        /* ========== EMPTY STATE ========== */
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #a0aec0;
+        }
+
+        .empty-state-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+        }
+
+        .empty-state-text {
+            font-size: 14px;
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body>
+    <!-- HEADER -->
+    <div class="header">
+        <h1>📋 Kanban Board - Керування Проектами</h1>
+        <div class="header-actions">
+            <button class="btn btn-primary" onclick="openProjectModal()">
+                ➕ Новий Проект
+            </button>
+            <button class="btn btn-success" onclick="openTaskModal()">
+                ✓ Нова Задача
+            </button>
+        </div>
+    </div>
+
+    <!-- KANBAN CONTAINER -->
+    <div class="kanban-container">
+        <!-- PROJECT SELECTOR -->
+        <div class="project-selector">
+            <select id="projectSelect" onchange="loadTasks()">
+                <option value="">Виберіть проект...</option>
+            </select>
+        </div>
+
+        <!-- KANBAN BOARD -->
+        <div class="kanban-board">
+            <!-- TO DO COLUMN -->
+            <div class="kanban-column column-todo" data-status="todo">
+                <div class="column-header">
+                    <div class="column-title">
+                        📝 TO DO
+                        <span class="column-count" id="count-todo">0</span>
+                    </div>
+                </div>
+                <div class="task-list" id="tasks-todo" ondrop="drop(event)" ondragover="allowDrop(event)">
+                </div>
+            </div>
+
+            <!-- IN PROGRESS COLUMN -->
+            <div class="kanban-column column-in-progress" data-status="in_progress">
+                <div class="column-header">
+                    <div class="column-title">
+                        🚀 IN PROGRESS
+                        <span class="column-count" id="count-in-progress">0</span>
+                    </div>
+                </div>
+                <div class="task-list" id="tasks-in_progress" ondrop="drop(event)" ondragover="allowDrop(event)">
+                </div>
+            </div>
+
+            <!-- DONE COLUMN -->
+            <div class="kanban-column column-done" data-status="done">
+                <div class="column-header">
+                    <div class="column-title">
+                        ✅ DONE
+                        <span class="column-count" id="count-done">0</span>
+                    </div>
+                </div>
+                <div class="task-list" id="tasks-done" ondrop="drop(event)" ondragover="allowDrop(event)">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PROJECT MODAL -->
+    <div class="modal" id="projectModal">
+        <div class="modal-content">
+            <div class="modal-header">Новий Проект</div>
+            <div class="form-group">
+                <label>Назва проекту</label>
+                <input type="text" id="projectName" placeholder="Введіть назву проекту">
+            </div>
+            <div class="form-group">
+                <label>Опис</label>
+                <textarea id="projectDescription" placeholder="Опис проекту (необов'язково)"></textarea>
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" onclick="closeProjectModal()">Скасувати</button>
+                <button class="btn btn-primary" onclick="createProject()">Створити</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- TASK MODAL -->
+    <div class="modal" id="taskModal">
+        <div class="modal-content">
+            <div class="modal-header">Нова Задача</div>
+            <div class="form-group">
+                <label>Назва задачі</label>
+                <input type="text" id="taskTitle" placeholder="Введіть назву задачі">
+            </div>
+            <div class="form-group">
+                <label>Опис</label>
+                <textarea id="taskDescription" placeholder="Опис задачі (необов'язково)"></textarea>
+            </div>
+            <div class="form-group">
+                <label>Пріоритет</label>
+                <select id="taskPriority">
+                    <option value="low">🟢 Низький</option>
+                    <option value="medium" selected>🟡 Середній</option>
+                    <option value="high">🔴 Високий</option>
+                </select>
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" onclick="closeTaskModal()">Скасувати</button>
+                <button class="btn btn-success" onclick="createTask()">Створити</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ========== API BASE URL ==========
+        const API_URL = 'http://localhost:5001/api';
+
+        // ========== ЗАВАНТАЖЕННЯ ПРОЕКТІВ ==========
+        async function loadProjects() {
+            try {
+                const response = await fetch(`${API_URL}/projects`);
+                const projects = await response.json();
+                
+                const select = document.getElementById('projectSelect');
+                select.innerHTML = '<option value="">Виберіть проект...</option>';
+                
+                projects.forEach(project => {
+                    const option = document.createElement('option');
+                    option.value = project.id;
+                    option.textContent = `${project.name} (${project.tasks_count} задач)`;
+                    select.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Помилка завантаження проектів:', error);
+            }
+        }
+
+        // ========== ЗАВАНТАЖЕННЯ ЗАДАЧ ==========
+        async function loadTasks() {
+            const projectId = document.getElementById('projectSelect').value;
+            
+            if (!projectId) {
+                clearTasks();
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/tasks?project_id=${projectId}`);
+                const tasks = await response.json();
+                
+                // Очищаємо всі колонки
+                clearTasks();
+                
+                // Розподіляємо задачі по колонках
+                tasks.forEach(task => {
+                    addTaskToColumn(task);
+                });
+                
+                // Оновлюємо лічильники
+                updateCounts();
+            } catch (error) {
+                console.error('Помилка завантаження задач:', error);
+            }
+        }
+
+        // ========== ОЧИЩЕННЯ ЗАДАЧ ==========
+        function clearTasks() {
+            document.getElementById('tasks-todo').innerHTML = '';
+            document.getElementById('tasks-in_progress').innerHTML = '';
+            document.getElementById('tasks-done').innerHTML = '';
+            updateCounts();
+        }
+
+        // ========== ДОДАВАННЯ ЗАДАЧІ ДО КОЛОНКИ ==========
+        function addTaskToColumn(task) {
+            const column = document.getElementById(`tasks-${task.status}`);
+            const card = createTaskCard(task);
+            column.appendChild(card);
+        }
+
+        // ========== СТВОРЕННЯ КАРТКИ ЗАДАЧІ ==========
+        function createTaskCard(task) {
+            const card = document.createElement('div');
+            card.className = `task-card priority-${task.priority}`;
+            card.draggable = true;
+            card.dataset.taskId = task.id;
+            card.ondragstart = drag;
+            
+            const priorityLabels = {
+                'high': '🔴 Високий',
+                'medium': '🟡 Середній',
+                'low': '🟢 Низький'
+            };
+            
+            card.innerHTML = `
+                <div class="task-title">${task.title}</div>
+                <div class="task-description">${task.description || 'Без опису'}</div>
+                <div class="task-meta">
+                    <span class="task-priority ${task.priority}">${priorityLabels[task.priority]}</span>
+                    <div class="task-actions">
+                        <button onclick="deleteTask(${task.id})" title="Видалити">🗑️</button>
+                    </div>
+                </div>
+            `;
+            
+            return card;
+        }
+
+        // ========== ОНОВЛЕННЯ ЛІЧИЛЬНИКІВ ==========
+        function updateCounts() {
+            const statuses = ['todo', 'in_progress', 'done'];
+            statuses.forEach(status => {
+                const count = document.getElementById(`tasks-${status}`).children.length;
+                document.getElementById(`count-${status}`).textContent = count;
+            });
+        }
+
+        // ========== DRAG AND DROP ==========
+        function allowDrop(event) {
+            event.preventDefault();
+        }
+
+        function drag(event) {
+            event.dataTransfer.setData('taskId', event.target.dataset.taskId);
+            event.target.classList.add('dragging');
+        }
+
+        async function drop(event) {
+            event.preventDefault();
+            const taskId = event.dataTransfer.getData('taskId');
+            const newStatus = event.currentTarget.id.replace('tasks-', '');
+            
+            // Оновлюємо статус задачі на сервері
+            try {
+                await fetch(`${API_URL}/tasks/${taskId}`, {
+                    method: 'PUT',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ status: newStatus })
+                });
+                
+                // Перезавантажуємо задачі
+                loadTasks();
+            } catch (error) {
+                console.error('Помилка оновлення задачі:', error);
+            }
+        }
+
+        // ========== МОДАЛЬНІ ВІКНА ==========
+        function openProjectModal() {
+            document.getElementById('projectModal').classList.add('active');
+        }
+
+        function closeProjectModal() {
+            document.getElementById('projectModal').classList.remove('active');
+            document.getElementById('projectName').value = '';
+            document.getElementById('projectDescription').value = '';
+        }
+
+        function openTaskModal() {
+            if (!document.getElementById('projectSelect').value) {
+                alert('Спочатку виберіть проект!');
+                return;
+            }
+            document.getElementById('taskModal').classList.add('active');
+        }
+
+        function closeTaskModal() {
+            document.getElementById('taskModal').classList.remove('active');
+            document.getElementById('taskTitle').value = '';
+            document.getElementById('taskDescription').value = '';
+            document.getElementById('taskPriority').value = 'medium';
+        }
+
+        // ========== СТВОРЕННЯ ПРОЕКТУ ==========
+        async function createProject() {
+            const name = document.getElementById('projectName').value.trim();
+            
+            if (!name) {
+                alert('Введіть назву проекту!');
+                return;
+            }
+
+            try {
+                await fetch(`${API_URL}/projects`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        name: name,
+                        description: document.getElementById('projectDescription').value
+                    })
+                });
+                
+                closeProjectModal();
+                loadProjects();
+            } catch (error) {
+                console.error('Помилка створення проекту:', error);
+            }
+        }
+
+        // ========== СТВОРЕННЯ ЗАДАЧІ ==========
+        async function createTask() {
+            const projectId = document.getElementById('projectSelect').value;
+            const title = document.getElementById('taskTitle').value.trim();
+            
+            if (!title) {
+                alert('Введіть назву задачі!');
+                return;
+            }
+
+            try {
+                await fetch(`${API_URL}/tasks`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        project_id: parseInt(projectId),
+                        title: title,
+                        description: document.getElementById('taskDescription').value,
+                        priority: document.getElementById('taskPriority').value,
+                        status: 'todo'
+                    })
+                });
+                
+                closeTaskModal();
+                loadTasks();
+            } catch (error) {
+                console.error('Помилка створення задачі:', error);
+            }
+        }
+
+        // ========== ВИДАЛЕННЯ ЗАДАЧІ ==========
+        async function deleteTask(taskId) {
+            if (!confirm('Видалити цю задачу?')) return;
+
+            try {
+                await fetch(`${API_URL}/tasks/${taskId}`, {
+                    method: 'DELETE'
+                });
+                
+                loadTasks();
+            } catch (error) {
+                console.error('Помилка видалення задачі:', error);
+            }
+        }
+
+        // ========== ІНІЦІАЛІЗАЦІЯ ==========
+        window.onload = () => {
+            loadProjects();
+        };
+    </script>
+</body>
+</html>

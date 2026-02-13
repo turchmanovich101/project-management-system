@@ -1,0 +1,22 @@
+# Залежності для Lab6 - Flask REST API + Kanban Board
+
+# Flask - веб-фреймворк для створення веб-додатків
+# Використовується для створення REST API та веб-інтерфейсу
+Flask>=3.0.0
+
+# Flask-CORS - підтримка Cross-Origin Resource Sharing
+# Дозволяє викликати API з інших доменів
+Flask-CORS>=4.0.0
+
+# SQLAlchemy - ORM для роботи з базою даних
+# Використовується для зберігання проектів та задач в SQLite
+SQLAlchemy>=2.0.0
+
+# Flask-SQLAlchemy - інтеграція SQLAlchemy з Flask
+Flask-SQLAlchemy>=3.0.0
+
+# pytest - фреймворк для тестування
+pytest>=7.0.0
+
+# pytest-cov - покриття коду тестами
+pytest-cov>=4.0.0
