@@ -1,0 +1,11 @@
+# Залежності для Lab4 - SQLite Database з SQLAlchemy
+
+# SQLAlchemy - ORM для роботи з базою даних
+# Забезпечує об'єктно-реляційне відображення (ORM)
+SQLAlchemy>=2.0.0
+
+# pytest - фреймворк для тестування
+pytest>=7.0.0
+
+# pytest-cov - покриття коду тестами
+pytest-cov>=4.0.0
