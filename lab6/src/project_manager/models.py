@@ -94,6 +94,14 @@ class Task(Base):
     # За замовчуванням "medium"
     priority = Column(String(50), default="medium")
     
+    # assigned_to - ID користувача, якому призначена задача
+    # Може бути NULL якщо задача не призначена
+    assigned_to = Column(Integer, nullable=True, default=None)
+    
+    # due_date - термін виконання задачі
+    # Може бути NULL
+    due_date = Column(DateTime, nullable=True, default=None)
+    
     # created_at - дата та час створення задачі
     # Автоматично встановлюється поточна дата/час
     created_at = Column(DateTime, default=datetime.utcnow)
@@ -116,5 +124,7 @@ class Task(Base):
             "description": self.description,
             "status": self.status,
             "priority": self.priority,
+            "assigned_to": self.assigned_to,
+            "due_date": self.due_date.isoformat() if self.due_date else None,
             "created_at": self.created_at.isoformat() if self.created_at else None
         }
